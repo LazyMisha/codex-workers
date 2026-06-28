@@ -11,7 +11,27 @@ fi
 rm -rf reports logs
 mkdir reports logs
 
-echo "Step 1: Run planner"
+echo "Step 1: Run architecture"
+./run-architecture.sh
+
+echo "Step 2: Run architecture review"
+./run-architecture-reviewer.sh
+
+echo "Step 3: Run fix loop for architecture if needed"
+if grep -q "Status: APPROVED" reports/architecture-review.md; then
+  echo "Architecture review passed. No fix loop needed."
+else
+  ./run-fix-loop-architecture.sh
+fi
+
+echo ""
+read -p "Approve architecture and continue with plan? Type 'yes': " ARCH_APPROVAL
+if [ "$ARCH_APPROVAL" != "yes" ]; then
+  echo "Stopped. Architecture was not approved."
+  exit 0
+fi
+
+echo "Step 4: Run planner"
 ./run-plan.sh
 
 echo ""
@@ -36,15 +56,15 @@ EOF
 fi
 
 echo ""
-echo "Step 2: Run workers"
+echo "Step 5: Run workers"
 ./run-workers.sh
 
 echo ""
-echo "Step 3: Run review"
+echo "Step 6: Run review"
 ./run-review.sh
 
 echo ""
-echo "Step 4: Run fix loop if needed"
+echo "Step 7: Run fix loop if needed"
 
 if grep -q "Status: APPROVED" reports/review.md; then
   echo "Review approved. No fix loop needed."
@@ -53,7 +73,7 @@ else
 fi
 
 echo ""
-echo "Step 5: Create final summary"
+echo "Step 8: Create final summary"
 
 SUMMARY_MODEL="${SUMMARY_MODEL}"
 SUMMARY_MODEL_REASONING_EFFORT="${SUMMARY_MODEL_REASONING_EFFORT}"
